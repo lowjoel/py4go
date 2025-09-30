@@ -277,6 +277,15 @@ func (self *Reference) IsDict() bool {
 	return self.Type().HasFlag(C.Py_TPFLAGS_DICT_SUBCLASS)
 }
 
+func (self *Reference) GetDictItem(key *Reference) (*Reference, error) {
+	item := C.PyDict_GetItem(self.Object, key.Object)
+	if item == nil {
+		return nil, nil
+	}
+
+	return NewReference(item), nil
+}
+
 func (self *Reference) SetDictItem(key *Reference, value *Reference) error {
 	if C.PyDict_SetItem(self.Object, key.Object, value.Object) == 0 {
 		return nil
