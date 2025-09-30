@@ -88,3 +88,15 @@ func (self *Reference) CallRaw(args *Reference, kw *Reference) (*Reference, erro
 		return nil, GetError()
 	}
 }
+
+func (self *Reference) CallObject(args ...interface{}) (*Reference, error) {
+	if args_, err := NewTuple(args...); err == nil {
+		if kw, err := NewDict(); err == nil {
+			return self.CallRaw(args_, kw)
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
