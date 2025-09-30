@@ -8,6 +8,7 @@ package python
 #include <Python.h>
 */
 import "C"
+import "runtime"
 
 //
 // ThreadState
@@ -34,9 +35,11 @@ type GilState struct {
 }
 
 func EnsureGilState() *GilState {
+	runtime.LockOSThread()
 	return &GilState{C.PyGILState_Ensure()}
 }
 
 func (self *GilState) Release() {
 	C.PyGILState_Release(self.State)
+	runtime.UnlockOSThread()
 }
