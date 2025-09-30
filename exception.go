@@ -5,6 +5,7 @@ package python
 
 import (
 	"errors"
+	"fmt"
 )
 
 /*
@@ -33,6 +34,9 @@ type Exception struct {
 	Type      *Reference
 	Value     *Reference
 	Traceback *Reference
+
+	typeStr  string
+	valueStr string
 }
 
 func FetchException() *Exception {
@@ -69,11 +73,26 @@ func NewExceptionRaw(type_ *Reference, value *Reference, traceback *Reference) *
 	}
 }
 
+// materialize forces the values to be evaluated in case the exception needs to outlive the lifetime of the Python
+// interpreter.
+func (self *Exception) materialize() {
+	if len(self.typeStr) > 0 {
+		return
+	}
+
+	state := EnsureGilState()
+	defer state.Release()
+	self.typeStr = self.Type.String()
+	self.valueStr = self.Value.String()
+}
+
 // error signature
 func (self *Exception) Error() string {
 	// TODO: include traceback?
+	self.materialize()
+
 	if self.Value != nil {
-		return self.Value.String()
+		return fmt.Sprintf("%s: %s", self.typeStr, self.valueStr)
 	} else if self.Type != nil {
 		return self.Type.String()
 	} else {
