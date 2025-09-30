@@ -52,6 +52,15 @@ func NewPrimitiveReference(value interface{}) (*Reference, error) {
 	return nil, fmt.Errorf("unsupported primitive: %s", value)
 }
 
+func MustPrimitiveReference(value interface{}) *Reference {
+	res, err := NewPrimitiveReference(value)
+	if err != nil {
+		panic(err)
+	}
+
+	return res
+}
+
 //
 // None
 //
