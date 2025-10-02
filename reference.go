@@ -22,8 +22,12 @@ func py_DecRef(object *C.PyObject) {
 	C.Py_DecRef(object)
 }
 
+func NewWeakReference(pyObject *C.PyObject) *Reference {
+	return &Reference{pyObject}
+}
+
 func NewReference(pyObject *C.PyObject) *Reference {
-	r := &Reference{pyObject}
+	r := NewWeakReference(pyObject)
 	C.Py_IncRef(pyObject)
 	runtime.AddCleanup(r, py_DecRef, r.Object)
 

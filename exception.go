@@ -31,10 +31,6 @@ func GetError() error {
 //
 
 type Exception struct {
-	Type      *Reference
-	Value     *Reference
-	Traceback *Reference
-
 	typeStr  string
 	valueStr string
 }
@@ -48,15 +44,15 @@ func FetchException() *Exception {
 		var type__, value_, traceback_ *Reference
 
 		if type_ != nil {
-			type__ = NewReference(type_)
+			type__ = NewWeakReference(type_)
 		}
 
 		if value != nil {
-			value_ = NewReference(value)
+			value_ = NewWeakReference(value)
 		}
 
 		if traceback != nil {
-			traceback_ = NewReference(traceback)
+			traceback_ = NewWeakReference(traceback)
 		}
 
 		return NewExceptionRaw(type__, value_, traceback_)
@@ -66,36 +62,18 @@ func FetchException() *Exception {
 }
 
 func NewExceptionRaw(type_ *Reference, value *Reference, traceback *Reference) *Exception {
-	return &Exception{
-		Type:      type_,
-		Value:     value,
-		Traceback: traceback,
-	}
-}
+	gil := EnsureGilState()
+	defer gil.Release()
 
-// materialize forces the values to be evaluated in case the exception needs to outlive the lifetime of the Python
-// interpreter.
-func (self *Exception) materialize() {
-	if len(self.typeStr) > 0 {
-		return
+	// Store the string versions of these objects because we do not own the exception value.
+	res := &Exception{
+		typeStr:  type_.String(),
+		valueStr: value.String(),
 	}
-
-	state := EnsureGilState()
-	defer state.Release()
-	self.typeStr = self.Type.String()
-	self.valueStr = self.Value.String()
+	return res
 }
 
 // error signature
 func (self *Exception) Error() string {
-	// TODO: include traceback?
-	self.materialize()
-
-	if self.Value != nil {
-		return fmt.Sprintf("%s: %s", self.typeStr, self.valueStr)
-	} else if self.Type != nil {
-		return self.Type.String()
-	} else {
-		return "malformed Python exception"
-	}
+	return fmt.Sprintf("%s: %s", self.typeStr, self.valueStr)
 }

@@ -22,12 +22,6 @@ func Finalize() error {
 		}
 	}
 
-	if repanic != nil {
-		// If this is a Python exception, we need to get the value before we shut down the Python runtime.
-		// Otherwise we will get a segfault.
-		repanic.materialize()
-	}
-
 	finalizeErr := C.Py_FinalizeEx() != 0
 	switch {
 	case repanic != nil:
